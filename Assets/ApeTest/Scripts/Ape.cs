@@ -3,16 +3,20 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using ApeTest.Utils;
+using UnityEngine;
 
 namespace ApeTest
 {
     public class Ape : IDisposable
     {
+        public bool Disposed { get; private set; }
+
         private readonly IApeAction[] _actions;
         private readonly ILogger _logger;
         private IApeAction _runningAction;
         private Task _runningTask;
         private CancellationTokenSource _cancellationTokenSource;
+        private bool _started;
 
         public Ape(IApeAction[] actions)
         {
@@ -26,17 +30,39 @@ namespace ApeTest
             _logger = logger;
         }
 
-        public void Update()
+        private void OnStart()
         {
+            _started = true;
+            Application.logMessageReceived += HandleLog;
+        }
+
+        public bool Update()
+        {
+            if (Disposed) return false;
+
+            if (!_started)
+            {
+                OnStart();
+            }
+
             RunningTaskFinishCheck();
-            if (_runningTask != null) return;
+            if (_runningTask != null) return true;
 
             var random = new List<IApeAction>();
 
-            foreach (var action in _actions)
+            try
             {
-                var state = action.CheckState();
-                if (state == State.Execute) random.Add(action);
+                foreach (var action in _actions)
+                {
+                    var state = action.CheckState();
+                    if (state == State.Execute) random.Add(action);
+                }
+            }
+            catch (ApeTestFinishException e)
+            {
+                _logger.TestFinish(e);
+                DisposeInternal();
+                return false;
             }
 
             var pickedAction = random.RandomPick();
@@ -48,6 +74,8 @@ namespace ApeTest
                 _runningTask = pickedAction.Run(_cancellationTokenSource.Token);
             }
             RunningTaskFinishCheck();
+
+            return true;
         }
 
         private void RunningTaskFinishCheck()
@@ -65,10 +93,37 @@ namespace ApeTest
             }
         }
 
+        private void HandleLog(string condition, string stacktrace, LogType type)
+        {
+            _logger.UnityLog(condition, stacktrace, type);
+        }
+
         public void Dispose()
         {
+            if (Disposed) return;
+
+            _logger.TestFinish(new ApeTestFinishException("Disposed"));
+            DisposeInternal();
+        }
+
+        public void DisposeInternal()
+        {
+            if (Disposed) return;
+
+            Disposed = true;
+            _cancellationTokenSource?.Cancel();
             _cancellationTokenSource?.Dispose();
-            _runningTask?.Dispose();
+
+            if (_logger != null && _logger is IDisposable disposableLogger) disposableLogger.Dispose();
+            foreach (var action in _actions)
+            {
+                if (action != null && action is IDisposable disposableAction) disposableAction.Dispose();
+            }
+
+            if (_started)
+            {
+                Application.logMessageReceived -= HandleLog;
+            }
         }
     }
 }

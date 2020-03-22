@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -6,39 +6,29 @@ using ApeTest.Utils;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using Object = UnityEngine.Object;
 
 namespace ApeTest.Action
 {
     public class RandomButtonClick : IApeAction
     {
         private Button _targetButton;
+        private readonly Func<GameObject, bool> _condition;
+
+        public RandomButtonClick()
+        {
+        }
+
+        public RandomButtonClick(Func<GameObject, bool> condition)
+        {
+            _condition = condition;
+        }
 
         public State CheckState()
         {
             var buttons = Object.FindObjectsOfType<Button>();
-            _targetButton = buttons.Shuffle().FirstOrDefault(CheckButtonClickable);
+            _targetButton = buttons.Shuffle().FirstOrDefault(x => ApeUtil.CheckButtonClickable(x, _condition));
             return _targetButton != null ? State.Execute : State.DontExecute;
-        }
-
-        public static bool CheckButtonClickable(Button button)
-        {
-            if (!button.isActiveAndEnabled) return false;
-            if (!button.interactable) return false;
-
-            var rect = button.GetComponent<RectTransform>();
-            var center = rect.position;
-            var canvas = button.GetComponentInParent<Canvas>();
-            var pos = RectTransformUtility.WorldToScreenPoint(canvas.worldCamera, center);
-
-            var eventDataCurrentPosition = new PointerEventData(EventSystem.current)
-            {
-                position = pos
-            };
-            var results = new List<RaycastResult>();
-            EventSystem.current.RaycastAll(eventDataCurrentPosition, results);
-            var raycastResult = results.Any() && results[0].gameObject.GetComponentInParent<Button>() == button;
-
-            return raycastResult;
         }
 
         public Task Run(CancellationToken cancellationToken)
@@ -54,7 +44,7 @@ namespace ApeTest.Action
 
         public override string ToString()
         {
-            return $"RandomButtonClick(target = {_targetButton.name})";
+            return $"RandomButtonClick(target = {ApeUtil.GetFullName(_targetButton.gameObject)})";
         }
     }
 }

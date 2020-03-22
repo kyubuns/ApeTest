@@ -5,15 +5,32 @@ namespace ApeTest.Sample
 {
     public class SampleTester : MonoBehaviour
     {
-        private readonly Ape _ape = new Ape(new IApeAction[]
+        private Ape _ape;
+
+        public void Start()
         {
-            new RandomButtonClick(),
-            new KeyInputAction(),
-        });
+            DontDestroyOnLoad(gameObject);
+
+            var logger = new DefaultLogger();
+            _ape = new Ape(new IApeAction[]
+            {
+                new RandomButtonClick(),
+                new KeyInputAction(),
+                new StopWhenError(logger),
+            }, logger);
+        }
 
         public void Update()
         {
-            _ape.Update();
+            if (!_ape.Update())
+            {
+                Destroy(gameObject);
+            }
+        }
+
+        public void OnDestroy()
+        {
+            _ape?.Dispose();
         }
     }
 }

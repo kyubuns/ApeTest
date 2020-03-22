@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ApeTest
@@ -13,6 +14,13 @@ namespace ApeTest
     {
         Execute,
         DontExecute,
+    }
+
+    public class ApeTestFinishException : Exception
+    {
+        public ApeTestFinishException(string message) : base(message)
+        {
+        }
     }
 }
 
