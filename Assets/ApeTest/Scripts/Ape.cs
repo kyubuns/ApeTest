@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using ApeTest.Utils;
-using UnityEngine;
 
 namespace ApeTest
 {
@@ -70,24 +69,6 @@ namespace ApeTest
         {
             _cancellationTokenSource?.Dispose();
             _runningTask?.Dispose();
-        }
-    }
-
-    public interface ILogger
-    {
-        void ActionStart(IApeAction action);
-        void ActionFinish(IApeAction action);
-    }
-
-    public class DefaultLogger : ILogger
-    {
-        public void ActionStart(IApeAction action)
-        {
-            Debug.Log($"[{Time.frameCount}|{Time.time:0.00}] Start {action}");
-        }
-
-        public void ActionFinish(IApeAction action)
-        {
         }
     }
 }
