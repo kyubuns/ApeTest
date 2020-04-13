@@ -13,7 +13,7 @@ namespace ApeTest.Action
         {
             triggerUnityLog.OnUnityLog += (message, _, type) =>
             {
-                if (type != LogType.Log && type != LogType.Assert)
+                if (type != LogType.Log)
                 {
                     _errorCaused = true;
                     _errorMessage = message;

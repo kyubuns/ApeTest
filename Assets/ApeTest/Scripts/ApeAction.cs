@@ -12,6 +12,7 @@ namespace ApeTest
 
     public enum State
     {
+        ExecuteForce,
         Execute,
         DontExecute,
     }

@@ -48,6 +48,7 @@ namespace ApeTest
             RunningTaskFinishCheck();
             if (_runningTask != null) return true;
 
+            var executeForce = new List<IApeAction>();
             var random = new List<IApeAction>();
 
             try
@@ -55,6 +56,7 @@ namespace ApeTest
                 foreach (var action in _actions)
                 {
                     var state = action.CheckState();
+                    if (state == State.ExecuteForce) executeForce.Add(action);
                     if (state == State.Execute) random.Add(action);
                 }
             }
@@ -65,13 +67,24 @@ namespace ApeTest
                 return false;
             }
 
-            var pickedAction = random.RandomPick();
-            if (pickedAction != null)
+            if (executeForce.Count > 0)
             {
+                var action = executeForce[0];
                 _cancellationTokenSource = new CancellationTokenSource();
-                _logger.ActionStart(pickedAction);
-                _runningAction = pickedAction;
-                _runningTask = pickedAction.Run(_cancellationTokenSource.Token);
+                _logger.ActionStart(action);
+                _runningAction = action;
+                _runningTask = action.Run(_cancellationTokenSource.Token);
+            }
+            else
+            {
+                var pickedAction = random.RandomPick();
+                if (pickedAction != null)
+                {
+                    _cancellationTokenSource = new CancellationTokenSource();
+                    _logger.ActionStart(pickedAction);
+                    _runningAction = pickedAction;
+                    _runningTask = pickedAction.Run(_cancellationTokenSource.Token);
+                }
             }
             RunningTaskFinishCheck();
 

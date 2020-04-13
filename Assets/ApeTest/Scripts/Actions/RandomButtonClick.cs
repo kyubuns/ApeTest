@@ -3,7 +3,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using ApeTest.Utils;
-using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
@@ -13,13 +12,13 @@ namespace ApeTest.Action
     public class RandomButtonClick : IApeAction
     {
         private Button _targetButton;
-        private readonly Func<GameObject, bool> _condition;
+        private readonly Func<Button, bool> _condition;
 
         public RandomButtonClick()
         {
         }
 
-        public RandomButtonClick(Func<GameObject, bool> condition)
+        public RandomButtonClick(Func<Button, bool> condition)
         {
             _condition = condition;
         }
